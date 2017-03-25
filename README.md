@@ -23,7 +23,10 @@ Before using the scripts, you must copy the the `gpcmex` file from `MATLAB/[Rele
 <img src="./Screenshots/state_comm.png" width="49%"> <img src="./Screenshots/state_uncert.png" width="49%">
 <img src="./Screenshots/objective.png" width="49%"> <img src="./Screenshots/trajectories.png" width="49%">
 
+## References
+[1] Sotiris Papatheodorou, Yiannis Stergiopoulos, Anthony Tzes, [*Distributed area coverage control with imprecise robot localization*](http://ieeexplore.ieee.org/document/7535920/), 24th Mediterranean Conference on Control and Automation (MED) 2016, pp. 214-219, 21-24 June 2016, Athens, Greece 
+
 ### License
 Distributed under the [Apache License Version 2.0](LICENSE.txt)
 <br>
-Copyright © 2016 Sotiris Papatheodorou
+Copyright © 2016-2017 Sotiris Papatheodorou
