@@ -34,7 +34,7 @@ PLOT_STATE = 1;
 % Save the network state in each iteration
 SAVE_FRAMES = 0;
 % Save the results to file
-SAVE_RESULTS = 1;
+SAVE_RESULTS = 0;
 
 % Common uncertainty disk radius. Can be set to differ between nodes
 % Set to 0 for exact positioning
@@ -57,12 +57,12 @@ addpath( genpath('Functions') );
 
 
 % Load region
-% region = importdata('Input Files/region.txt');
-% axis_scale = [ -0.5 3.5 -0.5 3.5 ];
+region = importdata('Input Files/region.txt');
+axis_scale = [ -0.5 3.5 -0.5 3.5 ];
 
-region = importdata('Input Files/region_sq.txt');
-sc = 1;
-axis_scale = [-sc sc -sc sc];
+% region = importdata('Input Files/region_sq.txt');
+% sc = 1;
+% axis_scale = [-sc sc -sc sc];
 
 % region = importdata('Input Files/region_pi.txt');
 % sc = 0.6;
@@ -80,29 +80,34 @@ rarea = polyarea_nan(region(1,:), region(2,:));
 % Load nodes
 % x = importdata('Input Files/2_nodes.txt');
 % x = importdata('Input Files/3_nodes.txt');
-% x = importdata('Input Files/4_nodes.txt');
+x = importdata('Input Files/4_nodes.txt');
 % x = importdata('Input Files/10_nodes.txt');
 % x = importdata('Input Files/6_nodes_inv_tri.txt');
-% x = x(2:end);
-% N = length( x ) / 2;
-% x = reshape(x, 2, N);
+x = x(2:end);
+N = length( x ) / 2;
+x = reshape(x, 2, N);
 
-% Inverted triangle
-N = 6;
-x = zeros(2,N);
-bi = 0.07;
-bo = 0.14;
-t = [30 150 270 90 210 330];
-x(1,:) = cosd(t);
-x(2,:) = sind(t);
-x(:,1:3) = bi * x(:,1:3);
-x(:,4:6) = bo * x(:,4:6);
+% % Inverted triangle
+% N = 6;
+% x = zeros(2,N);
+% bi = 0.07;
+% bo = 0.14;
+% t = [30 150 270 90 210 330];
+% x(1,:) = cosd(t);
+% x(2,:) = sind(t);
+% x(:,1:3) = bi * x(:,1:3);
+% x(:,4:6) = bo * x(:,4:6);
 
 %%%%%%%%% Set uncertainty, sensing and communication radii %%%%%%%%%%%%%%%%
 % They can be set to differ between nodes here
 uradii = uncert_rad * ones(1,N);
 sradii = sensing_rad * ones(1,N);
 cradii = comm_rad * ones(1,N);
+
+% Set random radii
+rng(1);
+uradii = uncert_rad * rand([1,N]) + uncert_rad/2;
+sradii = sensing_rad * rand([1,N]) + sensing_rad/2;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -136,8 +141,8 @@ xstorage = zeros(2,N,smax);
 covered_area = zeros(1,smax);
 H = zeros(1,smax);
 in_range = cell([1 N]);
-GVcells = cell([1 N]);
-GVrcells = cell([1 N]);
+cells = cell([1 N]);
+rcells = cell([1 N]);
 
 % Create sim struct that contains all information, used for plots
 sim = struct;
@@ -150,8 +155,8 @@ sim.x = x;
 sim.uradii = uradii;
 sim.sradii = sradii;
 sim.cradii = cradii;
-sim.cells = GVcells;
-sim.rcells = GVrcells;
+sim.cells = cells;
+sim.rcells = rcells;
 sim.velocity = zeros(2,N);
 sim.in_range = in_range;
 sim.axis = axis_scale;
@@ -175,13 +180,14 @@ while s <= smax
 		tmpx = x(:,in_range{i});
 
 		% Find the cell of each node i based on its neighbors
-		GVcells{i} = GV_cell( region, tmpx, uradii, 1 );
-		GVrcells{i} = rad_cell( x(:,i) , GVcells{i} , sradii(i));
+		cells{i} = AWGV_cell(region, tmpx, uradii, sradii, 1, rdiameter);
+% 		cells{i} = GV_cell( region, tmpx, uradii, 1 );
+		rcells{i} = rad_cell( x(:,i) , cells{i} , sradii(i));
     end
     
     % Update sim struct
-    sim.cells = GVcells;
-    sim.rcells = GVrcells;
+    sim.cells = cells;
+    sim.rcells = rcells;
     sim.in_range = in_range;
 	
 	% Store values and covered area - objective function H
@@ -190,8 +196,8 @@ while s <= smax
 	% If there is uncertainty, the objective H is not the covered area
     if UNCERT
 		for i=1:N
-            if ~isempty(GVrcells{i})
-                H(s) = H(s) + polyarea_nan(GVrcells{i}(1,:), GVrcells{i}(2,:));
+            if ~isempty(rcells{i})
+                H(s) = H(s) + polyarea_nan(rcells{i}(1,:), rcells{i}(2,:));
             end
 		end
     else
@@ -207,37 +213,37 @@ while s <= smax
         switch CTRL_LAW
             case 'CELL_CENTROID'
                 move_vector(:,i) = ...
-                    a * centroid_law( x(:,i), GVcells{i} );
+                    a * centroid_law( x(:,i), cells{i} );
             case 'RCELL_CENTROID'
                 move_vector(:,i) = ...
-                    a * centroid_law( x(:,i), GVrcells{i} );
+                    a * centroid_law( x(:,i), rcells{i} );
             case 'FREE_ARCS'
                 move_vector(:,i) = ...
-                    a * C_integral_law_num( x(:,i), GVcells{i}, sradii(i) );
+                    a * C_integral_law_num( x(:,i), cells{i}, sradii(i) );
             case 'GV_COMPLETE'
                 move_vector(:,i) = ...
-                    a * C_integral_law_num( x(:,i), GVcells{i}, sradii(i) );
+                    a * C_integral_law_num( x(:,i), cells{i}, sradii(i) );
                 %%%%%%% ADD DELAUNAY CHECK HERE %%%%%%%
 				for j=1:N
 					if i ~= j
 						% Integral over Hij and Hji
 						move_vector(:,i) = move_vector(:,i) + ...
 						a * H_integral_law...
-						( x(:,i), uradii(i), GVcells{i}, sradii(i),...
-						  x(:,j), uradii(j), GVcells{j}, sradii(j), true );
+						( x(:,i), uradii(i), cells{i}, sradii(i),...
+						  x(:,j), uradii(j), cells{j}, sradii(j), true );
 					end
 				end
             case 'GV_COMPROMISE'
                 move_vector(:,i) = ...
-                    a * C_integral_law_num( x(:,i), GVcells{i}, sradii(i) );
+                    a * C_integral_law_num( x(:,i), cells{i}, sradii(i) );
                 %%%%%%% ADD DELAUNAY CHECK HERE %%%%%%%
 				for j=1:N
 					if i ~= j
 						% Integral over Hij
 						move_vector(:,i) = move_vector(:,i) + ...
 						a * H_integral_law...
-						( x(:,i), uradii(i), GVcells{i}, sradii(i),...
-						  x(:,j), uradii(j), GVcells{j}, sradii(j), false );
+						( x(:,i), uradii(i), cells{i}, sradii(i),...
+						  x(:,j), uradii(j), cells{j}, sradii(j), false );
 					end
 				end
         end
