@@ -19,9 +19,10 @@ close all
 % Uncomment to select control law
 % CTRL_LAW = 'CELL_CENTROID';
 % CTRL_LAW = 'RCELL_CENTROID';
-CTRL_LAW = 'FREE_ARCS';
+% CTRL_LAW = 'FREE_ARCS';
 % CTRL_LAW = 'GV_COMPLETE';
 % CTRL_LAW = 'GV_COMPROMISE';
+CTRL_LAW = 'AWGV_COMPLETE';
 
 % Use a finite communication range
 FINITE_COMM_RANGE = 0;
@@ -246,7 +247,17 @@ while s <= smax
 						( x(:,i), uradii(i), cells{i}, sradii(i),...
 						  x(:,j), uradii(j), cells{j}, sradii(j), false );
 					end
-				end
+                end
+            case 'AWGV_COMPLETE'
+                move_vector(:,i) = ...
+                    a * C_integral_law_num( x(:,i), cells{i}, sradii(i) );
+                for j=1:N
+					if i ~= j
+						% Integral over Hij and Hji
+						move_vector(:,i) = move_vector(:,i) + ...
+						a * 1;
+					end
+                end
         end
     end
     

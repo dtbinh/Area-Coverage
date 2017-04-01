@@ -16,6 +16,7 @@ clear variables
 
 syms a b c x y xi yi xj yj ri rj Ri Rj t
 assume([a b c x y xi yi xj yj ri rj Ri Rj],'real');
+assume([c ri rj Ri Rj],'positive');
 
 % Hyperbola parameters
 qi = [xi ; yi];
@@ -62,10 +63,17 @@ ddHji = diff(dHji, t);
 ni = ddHij - dot( ddHij, dHij/norm(dHij) ) * dHij/norm(dHij);
 nj = ddHji - dot( ddHji, dHji/norm(dHji) ) * dHji/norm(dHji);
 % Whether the cell is convex or not depends on the sign of a
-ni = - ni / nrom(ni);
-nj = - nj / nrom(nj);
-% CHANGE SIGNS DEPENDING ON a
+ni = - sign(ai) * ni / norm(ni);
+nj = - sign(aj) * nj / norm(nj);
 
 % Export matlab functions
 Jni = Ji * ni;
 Jnj = Jj * nj;
+FJni = matlabFunction( Jni, 'File','FJni_AWGV');
+FJnj = matlabFunction( Jnj, 'File','FJnj_AWGV');
+
+FJi = matlabFunction( Ji, 'File','FJi_AWGV');
+FJj = matlabFunction( Jj, 'File','FJj_AWGV');
+
+Fni = matlabFunction( ni, 'File','Fni_AWGV');
+Fnj = matlabFunction( nj, 'File','Fnj_AWGV');
