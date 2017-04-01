@@ -23,7 +23,7 @@ function W = AWGV_cell(region, q, r, R, i, diam)
 	end
 	
 	% Number of nodes
-	N = length(r);
+	N = length(R);
 	
 	% Initialize cell to region
 	W = region;
@@ -34,21 +34,37 @@ function W = AWGV_cell(region, q, r, R, i, diam)
 			a = (r(i) + r(j) + R(j) - R(i))/2;
 			c = norm(q(:,i)-q(:,j))/2;
 			b = sqrt(c^2-a^2);
+%             fprintf('a = %f  b = %f  c = %f\n', a, b, c);
 			
-			% Create the cell of i wrt j
-			t = linspace(acosh(diam/abs(a)),-acosh(diam/abs(a)));
-			H = [a*cosh(t) ; b*sinh(t)];
+            % The cell of i is empty (or a ray for ==)
+            if a >= c
+                W = [];
+                return
+            % The cell of i is the whole region (or minus a ray for ==)
+            elseif a <= -c
+                W = region;
+                return
+            end
+            
+            if a == 0
+                H = [0 -diam -diam 0 ; diam diam -diam -diam];
+            else
+                % Create the cell of i wrt j
+                t = linspace(asinh(diam/abs(a)),-asinh(diam/abs(a)));
+                H = [a*cosh(t) ; b*sinh(t)];
+                % Extend the cell towards qi
+                H = [H(:,1)+[0;diam] H(:,1)+[2*diam;diam] ...
+                    H(:,end)+[2*diam;-diam] H(:,end)+[0;-diam] H];
+            end
+            % Rotate and translate the cell
 			H = rot(H, atan2(q(2,i)-q(2,j),q(1,i)-q(1,j)));
 			H = bsxfun(@plus, H, (q(:,i)+q(:,j))/2);
 			
-			% Extend the cell towards qi
-			v = diam * (q(:,i)-q(:,j));
-			H = [H(:,1)+v H H(:,end)+v];
 			
 			% Intersect with current cell
 			if ~isempty(W)
 				[pbx, pby] = polybool('and', ...
-					W(1,:), W(2,:), H(1,:), H(2,:));
+                    W(1,:), W(2,:), H(1,:), H(2,:));
 				W = [pbx ; pby];
 			else
 				return
