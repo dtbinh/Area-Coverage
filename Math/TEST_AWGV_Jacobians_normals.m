@@ -35,8 +35,6 @@ for i=1:N
     AWGV{i} = AWGV_cell(region, q, r, R, i);
 end
 
-% Normal vectors
-
 
 
 

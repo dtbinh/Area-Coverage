@@ -13,9 +13,10 @@
 % limitations under the License.
 
 clear variables
+tic
 
 syms a b c x y xi yi xj yj ri rj Ri Rj t
-assume([a b c x y xi yi xj yj ri rj Ri Rj],'real');
+assume([a b c x y xi yi xj yj ri rj Ri Rj t],'real');
 assume([c ri rj Ri Rj],'positive');
 
 % Hyperbola parameters
@@ -25,7 +26,7 @@ c = norm(qi-qj) / 2;
 ai = (ri + rj + Rj - Ri) / 2;
 bi = sqrt(c^2 - ai^2);
 aj = (ri + rj + Ri - Rj) / 2;
-bj = sqrt(c^2 - ai^2);
+bj = sqrt(c^2 - aj^2);
 
 % Hyperbolic branches
 Hij = [ai * cosh(t) ; bi * sinh(t)];
@@ -36,6 +37,10 @@ thetai = atan2( yi-yj, xi-xj );
 thetaj = atan2( yj-yi, xj-xi );
 Hij = [cos(thetai) -sin(thetai) ; sin(thetai) cos(thetai)] * Hij;
 Hji = [cos(thetaj) -sin(thetaj) ; sin(thetaj) cos(thetaj)] * Hji;
+
+% COMPLEX Hij-Hji HERE
+% Due to cos(atan2( )) and sin(atan2( ))
+% Define anonymous functions for the above expressions
 
 % Translate branches
 Hij = Hij + (qi+qj)/2;
@@ -66,9 +71,19 @@ nj = ddHji - dot( ddHji, dHji/norm(dHji) ) * dHji/norm(dHji);
 ni = - sign(ai) * ni / norm(ni);
 nj = - sign(aj) * nj / norm(nj);
 
-% Export matlab functions
+% Products
 Jni = Ji * ni;
 Jnj = Jj * nj;
+
+% Simplify expressions
+% Ji = simplify(Ji);
+% Jj = simplify(Jj);
+% ni = simplify(ni);
+% nj = simplify(nj);
+% Jni = simplify(Jni);
+% Jnj = simplify(Jnj);
+
+% Export matlab functions
 FJni = matlabFunction( Jni, 'File','FJni_AWGV');
 FJnj = matlabFunction( Jnj, 'File','FJnj_AWGV');
 
@@ -77,3 +92,6 @@ FJj = matlabFunction( Jj, 'File','FJj_AWGV');
 
 Fni = matlabFunction( ni, 'File','Fni_AWGV');
 Fnj = matlabFunction( nj, 'File','Fnj_AWGV');
+
+elapsed_time = toc;
+disp(elapsed_time);

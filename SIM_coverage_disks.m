@@ -255,7 +255,11 @@ while s <= smax
 					if i ~= j
 						% Integral over Hij and Hji
 						move_vector(:,i) = move_vector(:,i) + ...
-						a * 1;
+						a * AWGV_cell_integrals...
+						( x(:,i), uradii(i), cells{i}, sradii(i),...
+						  x(:,j), uradii(j), cells{j}, sradii(j), true );
+                        % RETURNS COMPLEX MOVE VECTOR
+                        % FJni_AWGV returns complex value
 					end
                 end
         end
