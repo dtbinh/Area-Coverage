@@ -41,6 +41,10 @@ bji = sqrt(c^2 - aji^2);
 % Error tolerance
 e = 10^-10;
 
+if (~isreal(bij) || ~isreal(bji))
+    disp('b is not real');
+end
+
 move_vector = zeros(2,1);
 
 
@@ -72,6 +76,7 @@ if ~isempty(GVcelli)
 
                 uni = FJni_AWGV(sradiusi,sradiusj,uradiusi,uradiusj,...
                     t,xi,xj,yi,yj);
+                
 
                 % Rotate back to the correct orientation
                 uni = rot( uni, -theta );

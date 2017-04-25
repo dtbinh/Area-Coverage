@@ -32,15 +32,24 @@ bj = sqrt(c^2 - aj^2);
 Hij = [ai * cosh(t) ; bi * sinh(t)];
 Hji = [aj * cosh(t) ; bj * sinh(t)];
 
-% Rotate branches
-thetai = atan2( yi-yj, xi-xj );
-thetaj = atan2( yj-yi, xj-xi );
-Hij = [cos(thetai) -sin(thetai) ; sin(thetai) cos(thetai)] * Hij;
-Hji = [cos(thetaj) -sin(thetaj) ; sin(thetaj) cos(thetaj)] * Hji;
+% NO NEED FOR THE PART BELOW
+% Rotation matrices
+% Use anonymous functions for cos(atan2()) and sin(atan2())
+% Matlab returns them in a form with complex numbers
+cosatan = @(y,x) x/sqrt(x.^2+y.^2);
+sinatan = @(y,x) y/sqrt(x.^2+y.^2);
+Rij = [ cosatan( yi-yj, xi-xj ) -sinatan( yi-yj, xi-xj ) ;
+        sinatan( yi-yj, xi-xj ) cosatan( yi-yj, xi-xj ) ];
+Rji = [cosatan( yj-yi, xj-xi ) -sinatan( yj-yi, xj-xi ) ;
+        sinatan( yj-yi, xj-xi ) cosatan( yj-yi, xj-xi ) ];
+Hij = Rij * Hij;
+Hji = Rji * Hji;
 
-% COMPLEX Hij-Hji HERE
-% Due to cos(atan2( )) and sin(atan2( ))
-% Define anonymous functions for the above expressions
+% Rotate branches
+% thetai = atan2( yi-yj, xi-xj );
+% thetaj = atan2( yj-yi, xj-xi );
+% Hij = [cos(thetai) -sin(thetai) ; sin(thetai) cos(thetai)] * Hij;
+% Hji = [cos(thetaj) -sin(thetaj) ; sin(thetaj) cos(thetaj)] * Hji;
 
 % Translate branches
 Hij = Hij + (qi+qj)/2;
@@ -60,6 +69,11 @@ Jjy_yi = diff(Hji(2), yi);
 Ji = [Jix_xi Jix_yi ; Jiy_xi Jiy_yi]';
 Jj = [Jjx_xi Jjx_yi ; Jjy_xi Jjy_yi]';
 
+% The jacobian elements are sometimes complex ONLY THE \partial y ELEMENTS
+% They become complex once the relevant sensing regions become tangent to
+% their respective cells
+% It seems the problem was in the way matlab handles cos(atan2())
+
 % Normal vectors
 dHij = diff(Hij, t);
 ddHij = diff(dHij, t);
@@ -70,6 +84,8 @@ nj = ddHji - dot( ddHji, dHji/norm(dHji) ) * dHji/norm(dHji);
 % Whether the cell is convex or not depends on the sign of a
 ni = - sign(ai) * ni / norm(ni);
 nj = - sign(aj) * nj / norm(nj);
+
+% Normal vectors are real so far
 
 % Products
 Jni = Ji * ni;

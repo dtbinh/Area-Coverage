@@ -79,14 +79,15 @@ rarea = polyarea_nan(region(1,:), region(2,:));
 
 
 % Load nodes
-% x = importdata('Input Files/2_nodes.txt');
-x = importdata('Input Files/3_nodes.txt');
+x = importdata('Input Files/2_nodes.txt');
+% x = importdata('Input Files/3_nodes.txt');
 % x = importdata('Input Files/4_nodes.txt');
 % x = importdata('Input Files/10_nodes.txt');
 % x = importdata('Input Files/6_nodes_inv_tri.txt');
 x = x(2:end);
 N = length( x ) / 2;
 x = reshape(x, 2, N);
+% x = [ 0.5 0.5 1.5 ; 0.1 1 0.1];
 
 % % Inverted triangle
 % N = 6;
@@ -258,8 +259,6 @@ while s <= smax
 						a * AWGV_cell_integrals...
 						( x(:,i), uradii(i), cells{i}, sradii(i),...
 						  x(:,j), uradii(j), cells{j}, sradii(j), true );
-                        % RETURNS COMPLEX MOVE VECTOR
-                        % FJni_AWGV returns complex value
 					end
                 end
         end
